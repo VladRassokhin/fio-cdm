@@ -243,8 +243,9 @@ if __name__ == '__main__':
     logging.debug(args)
     fio_job = Job()
 
-    version = subprocess.check_output(['fio', '--version'])
+    version = subprocess.check_output(['fio', '--version']).decode("utf-8").strip('\n')
     if version == "fio-3.1":
+        print ("Fio version is "+version)
         fio_job._bw = 'bw'
         fio_job._bw_coeff = 3
 
