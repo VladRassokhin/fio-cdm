@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import os
 import sys
 import json
@@ -7,6 +7,9 @@ import argparse
 import logging
 import configparser
 import subprocess
+
+BW = 'bw_bytes'
+BW_COEFF = 6
 
 
 def readable2byte(raw):
@@ -136,6 +139,10 @@ class Job:
                 os.remove(os.path.join(args.target, self._testfile_name))
 
         fio_output = json.loads(output)
+        f = open("results.json", "w")
+        f.write(str(output))
+        f.close()
+        print("saved results to file results.json")
         # rearrange to make jobname as keys
         info = {job.pop("jobname"): job for job in fio_output["jobs"]}
         logging.debug(info)
@@ -167,7 +174,7 @@ class Job:
 
         for job in self._jobs:
             _print_result_line(job, self._displayname(job),
-                               lambda d: d['bw_bytes'] / 10**6)
+                               lambda d: d[BW] / 10**BW_COEFF)
             if job['rnd'] == 'rnd' and args.extra_info:
                 _print_result_line(job, "... IOPS    ",
                                    lambda d: d['iops'])
@@ -236,6 +243,12 @@ if __name__ == '__main__':
                         format="%(message)s")
 
     logging.debug(args)
+
+    version = subprocess.check_output(['fio', '--version'])
+    if version == "fio-3.1":
+        BW = 'bw'
+        BW_COEFF = 3
+
 
     fio_job = Job()
     if args.jobs:
