@@ -8,10 +8,6 @@ import logging
 import configparser
 import subprocess
 
-BW = 'bw_bytes'
-BW_COEFF = 6
-
-
 def readable2byte(raw):
     num = raw.lower().rstrip("b").rstrip("i")
 
@@ -58,6 +54,8 @@ class Job:
                 'group_reporting': None
             }
         })
+        self._bw = 'bw_bytes'
+        self._bw_coeff = 6
         if args.zero_buffers:
             self._config.read_dict({'global': {'zero_buffers': None}})
         # Windows does not support pthread mutexes, suppress the warning
@@ -174,7 +172,7 @@ class Job:
 
         for job in self._jobs:
             _print_result_line(job, self._displayname(job),
-                               lambda d: d[BW] / 10**BW_COEFF)
+                               lambda d: d[(self._bw)] / 10**(self._bw_coeff))
             if job['rnd'] == 'rnd' and args.extra_info:
                 _print_result_line(job, "... IOPS    ",
                                    lambda d: d['iops'])
@@ -243,16 +241,14 @@ if __name__ == '__main__':
                         format="%(message)s")
 
     logging.debug(args)
+    fio_job = Job()
 
     version = subprocess.check_output(['fio', '--version'])
     if version == "fio-3.1":
-        global BW
-        global BW_COEFF
-        BW = 'bw'
-        BW_COEFF = 3
+        fio_job._bw = 'bw'
+        fio_job._bw_coeff = 3
 
 
-    fio_job = Job()
     if args.jobs:
         for job in args.jobs:
             rnd_type, qd, tn = job.split(',')
